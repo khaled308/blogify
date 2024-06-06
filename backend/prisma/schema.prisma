@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                        Int       @id @default(autoincrement())
+  username                  String    @unique
+  email                     String    @unique
+  password                  String
+  isVerified                Boolean   @default(false)
+  role                      Role      @default(USER)
+  lastLogin                 DateTime  @default(now())
+  profileImage              String?
+  coverImage                String?
+  gender                    Gender
+  bio                       String?
+  address                   String?
+  passwordResetToken        String?
+  passwordResetExpire       DateTime?
+  accountVerificationToken  String?
+  accountVerificationExpire String?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  following                 Follows[] @relation("Following")
+  followers                 Follows[] @relation("Followers")
+  posts                     Post[]
+  likes                     Like[]
+  dislikes                  DisLike[]
+  comments                  Comment[]
+}
+
+model Follows {
+  followerId  Int
+  followingId Int
+  follower    User @relation("Followers", fields: [followerId], references: [id])
+  following   User @relation("Following", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId])
+}
+
+model Post {
+  id         Int       @id @default(autoincrement())
+  title      String
+  content    String?
+  visibility Boolean   @default(true)
+  authorId   Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  tags       Tag[]     @relation("PostTags")
+  author     User      @relation(fields: [authorId], references: [id])
+  likes      Like[]
+  dislikes   DisLike[]
+  comments   Comment[]
+}
+
+model Like {
+  userId Int
+  postId Int
+  user   User @relation(fields: [userId], references: [id])
+  post   Post @relation(fields: [postId], references: [id])
+
+  @@id([userId, postId])
+}
+
+model DisLike {
+  userId Int
+  postId Int
+  user   User @relation(fields: [userId], references: [id])
+  post   Post @relation(fields: [postId], references: [id])
+
+  @@id([userId, postId])
+}
+
+model Comment {
+  id            Int       @id @default(autoincrement())
+  content       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  authorId      Int
+  postId        Int
+  parentId      Int?
+  author        User      @relation(fields: [authorId], references: [id])
+  post          Post      @relation(fields: [postId], references: [id])
+  parent        Comment?  @relation("ChildComments", fields: [parentId], references: [id])
+  childComments Comment[] @relation("ChildComments")
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts Post[] @relation("PostTags")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
