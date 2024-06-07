@@ -46,12 +46,13 @@ export const login = async (
       where: { email },
     });
 
-    if (!user) return res.status(400).send("email or password not correct");
+    if (!user)
+      return res.status(400).send({ message: "email or password not correct" });
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword)
-      return res.status(400).send("email or password not correct");
+      return res.status(400).send({ message: "email or password not correct" });
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET);
     res.cookie("token", `Barer ${token}`, {
