@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import { PORT } from "./config/constants";
-import { authRoutes, profileRoutes } from "./routes";
+import { authRoutes, postRoutes, profileRoutes } from "./routes";
 import errorHandler from "./utils/errorHandler";
 import notFoundHandler from "./utils/notFoundHandler";
 
@@ -13,6 +13,7 @@ app.use(cookieParser());
 // routes
 app.use("/api/", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/post", postRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
