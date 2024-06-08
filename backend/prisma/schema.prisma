@@ -46,7 +46,8 @@ model Follows {
 model Post {
   id         Int       @id @default(autoincrement())
   title      String
-  content    String?
+  content    String?   @db.Text
+  image      String?
   visibility Boolean   @default(true)
   authorId   Int
   createdAt  DateTime  @default(now())
