@@ -22,7 +22,7 @@ export const register = async (
       },
     });
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET);
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET);
     res.cookie("token", `Barer ${token}`, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -54,7 +54,7 @@ export const login = async (
     if (!validPassword)
       return res.status(400).send({ message: "email or password not correct" });
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET);
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET);
     res.cookie("token", `Barer ${token}`, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

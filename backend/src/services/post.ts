@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../db";
 import { z } from "zod";
+import ApiError from "../utils/ApiError";
 
 export const createPost = async (
   req: Request,
@@ -8,13 +9,13 @@ export const createPost = async (
   next: NextFunction
 ) => {
   try {
-    const { title, content, image, tags, userId } = req.body;
+    const { title, content, image, tags, user } = req.body;
     const post = await prisma.post.create({
       data: {
         title,
         content,
         image,
-        authorId: userId,
+        authorId: user.id,
         tags: {
           connectOrCreate: tags.map((tagName: string) => ({
             create: { name: tagName },
@@ -61,7 +62,7 @@ export const getPost = async (
     const { postId } = req.params;
     z.number().parse(+postId);
 
-    const posts = await prisma.post.findUnique({
+    const post = await prisma.post.findUnique({
       where: { id: +postId },
       include: {
         author: { select: { id: true, username: true } },
@@ -78,7 +79,36 @@ export const getPost = async (
       },
     });
 
-    res.send(posts);
+    if (!post) throw new ApiError("not found", 404);
+
+    res.send(post);
+  } catch (err) {
+    res.status(403).send(err);
+  }
+};
+
+export const deletePost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { postId } = req.params;
+    const { user } = req.body;
+    z.number().parse(+postId);
+
+    const post = await prisma.post.findUnique({
+      where: { id: +postId },
+    });
+
+    if (!post) throw new ApiError("not found", 404);
+
+    if (user.id != post.authorId && user.role != "ADMIN")
+      throw new ApiError("not allowed", 403);
+
+    await prisma.post.delete({ where: { id: post.id } });
+
+    res.send({ message: "post deleted successfully" });
   } catch (err) {
     res.status(403).send(err);
   }
