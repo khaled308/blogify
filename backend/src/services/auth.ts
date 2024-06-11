@@ -66,3 +66,9 @@ export const login = async (
     next(error);
   }
 };
+
+export const forgetPassword = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {};
