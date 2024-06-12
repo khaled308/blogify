@@ -10,3 +10,4 @@ export const MAIL_PORT = process.env.MAIL_PORT as unknown as number;
 export const MAIL_USER = process.env.MAIL_USER as string;
 export const MAIL_PASSWORD = process.env.MAIL_PASSWORD as string;
 export const MAIL_ENCRYPTION = process.env.MAIL_ENCRYPTION as string;
+export const FRONTEND_URL = process.env.FRONTEND_URL as string;
