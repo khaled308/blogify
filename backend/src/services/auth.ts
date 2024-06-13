@@ -90,17 +90,16 @@ export const forgetPassword = async (
       },
     });
     const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
-    console.log(resetLink);
     const emailOptions = {
       to: user.email,
       subject: "Password Reset Request",
-      htmlFilePath: "./src/templates/reset-password.hbs",
+      htmlFilePath: "./src/templates/email.hbs",
       replacements: {
         subject: "Password Reset Request",
         heading: "Reset Your Password",
         message: "We received a request to reset your password.",
-        resetLink,
-        senderName: "Your Company Name",
+        link: resetLink,
+        senderName: "Blogify",
       },
     };
     sendEmail(emailOptions);
@@ -142,6 +141,81 @@ export const resetPassword = async (
     });
 
     res.status(200).json({ message: "Password has been reset" });
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
+export const sendEmailVerificationToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { user: authUser } = req.body;
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenExpire = new Date(Date.now() + 60 * 60 * 1000);
+
+    const user = await prisma.user.update({
+      where: { id: authUser.id },
+      data: {
+        accountVerificationToken: verificationToken,
+        accountVerificationExpire: verificationTokenExpire,
+      },
+    });
+
+    const verificationLink = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const emailOptions = {
+      to: user.email,
+      subject: "Verify Your Email",
+      htmlFilePath: "./src/templates/email.hbs",
+      replacements: {
+        subject: "Verify Your Email",
+        heading: "Verify Your Email",
+        message: "We received a request to verify your email.",
+        link: verificationLink,
+        senderName: "Blogify",
+      },
+    };
+
+    sendEmail(emailOptions);
+    res.status(200).json({ message: "email verification sent" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { token } = req.body;
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        accountVerificationToken: token,
+        accountVerificationExpire: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        accountVerificationExpire: null,
+        accountVerificationToken: null,
+        isVerified: true,
+      },
+    });
+
+    res.status(200).json({ message: "email has been verified" });
   } catch (err) {
     console.error(err);
     next(err);

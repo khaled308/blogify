@@ -23,7 +23,7 @@ model User {
   passwordResetToken        String?
   passwordResetExpire       DateTime?
   accountVerificationToken  String?
-  accountVerificationExpire String?
+  accountVerificationExpire DateTime?
   createdAt                 DateTime      @default(now())
   updatedAt                 DateTime      @updatedAt
   following                 Follows[]     @relation("Following")

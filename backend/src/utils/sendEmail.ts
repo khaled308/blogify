@@ -27,7 +27,7 @@ interface MailOptions {
     subject: string;
     heading: string;
     message: string;
-    resetLink: string;
+    link: string;
     senderName: string;
   };
 }
