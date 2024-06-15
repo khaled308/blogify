@@ -12,7 +12,7 @@ export const isAuthenticated = (
 
     if (!token) return res.status(403).send({ message: "you are not allowed" });
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.body.user = { id: decoded.userId, role: decoded.role };
+    req.user = { id: decoded.userId, role: decoded.role };
     next();
   } catch (err) {
     return res.status(403).send({ message: "you are not allowed" });

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../db";
+import AuthRequestI from "../interfaces/AuthRequestI";
 
 export const getProfile = async (
   req: Request,
@@ -42,15 +43,13 @@ export const getProfile = async (
 };
 
 export const blockUser = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { userId: blockedId } = req.params;
-    const { user } = req.body;
-
-    if (blockedId == user.id)
+    if (+blockedId == +req.user.id)
       return res.status(403).send({ message: "You can not block yourself" });
 
     const blockedUser = await prisma.user.findUnique({
@@ -61,7 +60,7 @@ export const blockUser = async (
       return res.status(404).send({ message: "user mot found" });
 
     const blockedUserExist = await prisma.block.findFirst({
-      where: { blockedId: +blockedId, blockerId: user.id },
+      where: { blockedId: +blockedId, blockerId: req.user.id },
     });
 
     if (blockedUserExist)
@@ -69,7 +68,7 @@ export const blockUser = async (
 
     await prisma.block.create({
       data: {
-        blockerId: +user.id,
+        blockerId: +req.user.id,
         blockedId: +blockedId,
       },
     });
@@ -81,15 +80,14 @@ export const blockUser = async (
 };
 
 export const unblockUser = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { userId: blockedId } = req.params;
-    const { user } = req.body;
     const blockedUser = await prisma.block.findFirst({
-      where: { blockedId: +blockedId, blockerId: user.id },
+      where: { blockedId: +blockedId, blockerId: req.user.id },
     });
 
     if (!blockedUser)
@@ -97,7 +95,7 @@ export const unblockUser = async (
 
     await prisma.block.deleteMany({
       where: {
-        blockerId: +user.id,
+        blockerId: +req.user.id,
         blockedId: +blockedId,
       },
     });
@@ -109,15 +107,14 @@ export const unblockUser = async (
 };
 
 export const followUser = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { userId: followingId } = req.params;
-    const { user } = req.body;
 
-    if (followingId == user.id)
+    if (+followingId == +req.user.id)
       return res.status(403).send({ message: "You can not follow yourself" });
 
     const followingUser = await prisma.user.findUnique({
@@ -129,7 +126,7 @@ export const followUser = async (
 
     const followerUserExist = await prisma.follows.findFirst({
       where: {
-        followerId: user.id,
+        followerId: req.user.id,
         followingId: +followingId,
       },
     });
@@ -139,7 +136,7 @@ export const followUser = async (
 
     await prisma.follows.create({
       data: {
-        followerId: user.id,
+        followerId: req.user.id,
         followingId: +followingId,
       },
     });
@@ -151,15 +148,14 @@ export const followUser = async (
 };
 
 export const unfollowUser = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { userId } = req.params;
-    const { user } = req.body;
     const followingUser = await prisma.follows.findFirst({
-      where: { followingId: +userId, followerId: user.id },
+      where: { followingId: +userId, followerId: req.user.id },
     });
 
     if (!followingUser)
@@ -167,7 +163,7 @@ export const unfollowUser = async (
 
     await prisma.follows.deleteMany({
       where: {
-        followerId: +user.id,
+        followerId: +req.user.id,
         followingId: +userId,
       },
     });

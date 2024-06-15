@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import prisma from "../db";
 import { z } from "zod";
 import ApiError from "../utils/ApiError";
+import AuthRequestI from "../interfaces/AuthRequestI";
 
 export const createComment = async (
   req: Request,
@@ -30,13 +31,12 @@ export const createComment = async (
 };
 
 export const deleteComment = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { commentId, postId } = req.params;
-    const { user } = req.body;
     z.number().parse(+postId);
     z.number().parse(+commentId);
     const comment = await prisma.comment.findUnique({
@@ -49,9 +49,9 @@ export const deleteComment = async (
     if (!comment) throw new ApiError("Not Found", 404);
 
     if (
-      comment.authorId != +user.id &&
-      comment.post.author.id != +user.id &&
-      user.role != "ADMIN"
+      comment.authorId != +req.user.id &&
+      comment.post.author.id != +req.user.id &&
+      req.user.role != "ADMIN"
     )
       throw new ApiError("Not allowed", 403);
 

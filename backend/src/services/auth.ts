@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import prisma from "../db";
 import { FRONTEND_URL, JWT_SECRET } from "../config/constants";
 import sendEmail from "../utils/sendEmail";
+import AuthRequestI from "../interfaces/AuthRequestI";
 
 export const register = async (
   req: Request,
@@ -148,17 +149,16 @@ export const resetPassword = async (
 };
 
 export const sendEmailVerificationToken = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { user: authUser } = req.body;
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const verificationTokenExpire = new Date(Date.now() + 60 * 60 * 1000);
 
     const user = await prisma.user.update({
-      where: { id: authUser.id },
+      where: { id: req.user.id },
       data: {
         accountVerificationToken: verificationToken,
         accountVerificationExpire: verificationTokenExpire,

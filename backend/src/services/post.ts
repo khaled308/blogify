@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import prisma from "../db";
 import { z } from "zod";
 import ApiError from "../utils/ApiError";
+import AuthRequestI from "../interfaces/AuthRequestI";
 
 export const createPost = async (
   req: Request,
@@ -88,13 +89,12 @@ export const getPost = async (
 };
 
 export const deletePost = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { postId } = req.params;
-    const { user } = req.body;
     z.number().parse(+postId);
 
     const post = await prisma.post.findUnique({
@@ -103,7 +103,7 @@ export const deletePost = async (
 
     if (!post) throw new ApiError("not found", 404);
 
-    if (user.id != post.authorId && user.role != "ADMIN")
+    if (req.user.id != post.authorId && req.user.role != "ADMIN")
       throw new ApiError("not allowed", 403);
 
     await prisma.post.delete({ where: { id: post.id } });
