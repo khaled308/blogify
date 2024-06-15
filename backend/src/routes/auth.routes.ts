@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import {
   forgetPassword,
   login,
@@ -10,6 +10,7 @@ import {
 import validateSchema from "../middlewares/validate";
 import { registerSchema } from "../schemas/user";
 import { isAuthenticated } from "../middlewares/auth";
+import AuthRequestI from "../interfaces/AuthRequestI";
 
 const authRoutes = Router();
 
@@ -20,7 +21,9 @@ authRoutes.put("/reset-password", resetPassword);
 authRoutes.put(
   "/verify-email-token",
   isAuthenticated,
-  sendEmailVerificationToken
+  (req: Request, res: Response, next: NextFunction) => {
+    sendEmailVerificationToken(req as AuthRequestI, res, next);
+  }
 );
 authRoutes.put("/verify-email", isAuthenticated, verifyEmail);
 

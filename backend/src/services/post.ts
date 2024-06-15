@@ -5,18 +5,18 @@ import ApiError from "../utils/ApiError";
 import AuthRequestI from "../interfaces/AuthRequestI";
 
 export const createPost = async (
-  req: Request,
+  req: AuthRequestI,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { title, content, image, tags, user } = req.body;
+    const { title, content, image, tags } = req.body;
     const post = await prisma.post.create({
       data: {
         title,
         content,
         image,
-        authorId: user.id,
+        authorId: req.user.id,
         tags: {
           connectOrCreate: tags.map((tagName: string) => ({
             create: { name: tagName },
@@ -45,7 +45,16 @@ export const getPosts = async (
 ) => {
   try {
     const posts = await prisma.post.findMany({
-      include: { author: { select: { id: true, username: true } }, tags: true },
+      include: {
+        author: { select: { id: true, username: true } },
+        tags: true,
+        likes: {
+          select: { user: { select: { id: true, username: true } } },
+        },
+        dislikes: {
+          select: { user: { select: { id: true, username: true } } },
+        },
+      },
     });
 
     res.send(posts);
@@ -111,5 +120,101 @@ export const deletePost = async (
     res.send({ message: "post deleted successfully" });
   } catch (err) {
     res.status(403).send(err);
+  }
+};
+
+export const likePost = async (
+  req: AuthRequestI,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { postId } = req.params;
+
+    const post = await prisma.post.findUnique({
+      where: { id: +postId },
+    });
+
+    if (!post) return res.status(404).send({ message: "Post Not Found" });
+
+    const existingLike = await prisma.like.findUnique({
+      where: {
+        userId_postId: {
+          postId: +postId,
+          userId: req.user.id,
+        },
+      },
+    });
+
+    if (existingLike) {
+      await prisma.like.delete({
+        where: {
+          userId_postId: {
+            postId: +postId,
+            userId: req.user.id,
+          },
+        },
+      });
+      return res.status(200).send({ message: "Post unliked successfully" });
+    }
+
+    await prisma.like.create({
+      data: {
+        postId: +postId,
+        userId: req.user.id,
+      },
+    });
+    return res.status(200).send({ message: "Post liked successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const disLikePost = async (
+  req: AuthRequestI,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { postId } = req.params;
+
+    const post = await prisma.post.findUnique({
+      where: { id: +postId },
+    });
+
+    if (!post) return res.status(404).send({ message: "Post Not Found" });
+
+    const existingDislike = await prisma.disLike.findUnique({
+      where: {
+        userId_postId: {
+          postId: +postId,
+          userId: req.user.id,
+        },
+      },
+    });
+
+    if (existingDislike) {
+      await prisma.disLike.delete({
+        where: {
+          userId_postId: {
+            postId: +postId,
+            userId: req.user.id,
+          },
+        },
+      });
+      return res
+        .status(200)
+        .send({ message: "Post  dislike removed successfully" });
+    }
+
+    await prisma.disLike.create({
+      data: {
+        postId: +postId,
+        userId: req.user.id,
+      },
+    });
+    return res.status(200).send({ message: "Post disliked successfully" });
+  } catch (err) {
+    next(err);
   }
 };

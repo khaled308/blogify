@@ -19,6 +19,7 @@ export const getProfile = async (
         following: {
           select: { follower: { select: { username: true, id: true } } },
         },
+        posts: true,
       },
     });
 
