@@ -3,6 +3,7 @@ import prisma from "../db";
 import { z } from "zod";
 import ApiError from "../utils/ApiError";
 import AuthRequestI from "../interfaces/AuthRequestI";
+import { uploadToCloudinary } from "../utils/cloudinary";
 
 export const createPost = async (
   req: AuthRequestI,
@@ -10,7 +11,14 @@ export const createPost = async (
   next: NextFunction
 ) => {
   try {
-    const { title, content, image, tags } = req.body;
+    const { title, content, tags } = req.body;
+    let image: string | undefined;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer, "posts");
+      image = result.secure_url;
+    }
+
     const post = await prisma.post.create({
       data: {
         title,
@@ -214,6 +222,37 @@ export const disLikePost = async (
       },
     });
     return res.status(200).send({ message: "Post disliked successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const togglePostView = async (
+  req: AuthRequestI,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { postId } = req.params;
+    z.number().parse(+postId);
+
+    const post = await prisma.post.findUnique({
+      where: { id: +postId },
+    });
+
+    if (!post) return res.status(404).send({ message: "Post not found" });
+
+    if (post.authorId != req.user.id && req.user.role != "ADMIN")
+      return res.status(403).send({ message: "You are not allowed" });
+
+    await prisma.post.update({
+      where: {
+        id: +postId,
+      },
+      data: { visibility: !post.visibility },
+    });
+
+    return res.status(200).send({ message: "Post update successfully" });
   } catch (err) {
     next(err);
   }

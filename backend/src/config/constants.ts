@@ -11,3 +11,7 @@ export const MAIL_USER = process.env.MAIL_USER as string;
 export const MAIL_PASSWORD = process.env.MAIL_PASSWORD as string;
 export const MAIL_ENCRYPTION = process.env.MAIL_ENCRYPTION as string;
 export const FRONTEND_URL = process.env.FRONTEND_URL as string;
+export const CLOUDINARY_NAME = process.env.CLOUDINARY_NAME as string;
+export const CLOUDINARY_API_SECRET = process.env
+  .CLOUDINARY_API_SECRET as string;
+export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY as string;
