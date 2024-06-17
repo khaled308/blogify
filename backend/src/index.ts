@@ -1,5 +1,6 @@
 import express from "express";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { PORT } from "./config/constants";
 import { authRoutes, postRoutes, profileRoutes } from "./routes";
 import errorHandler from "./utils/errorHandler";
@@ -10,6 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(cors({ origin: "*" }));
 
 // routes
 app.use("/api/", authRoutes);
